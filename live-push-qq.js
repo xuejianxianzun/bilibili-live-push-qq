@@ -124,8 +124,8 @@ function sendMsg (room_id) {
   
   // 替换转义代码
   msg = msg.replace('{name}', room.name)
-  msg = msg.replace('{title}', room.title)
-  msg = msg.replace('{room_id}', room.room_id)
+  .replace('{title}', room.title)
+  .replace('{room_id}', room.room_id)
 
   console.log(msg)
 
