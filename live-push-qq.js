@@ -1,35 +1,43 @@
 // 监控 bilibili 直播间，当主播开播或下播时，通过 QQ 机器人（go-cqhttp）发送 QQ 消息进行提醒
+// 默认只在开播时发送提醒
+// github: https://github.com/xuejianxianzun/bilibili-live-push-qq
 const https = require('https')
 const http = require('http')
 
 // 以直播间为单位进行配置
+// 消息里可以使用的转义代码：
+// {name} {title} {room_id}
 const room_list = [
   {
     room_id: 23251345,  // 直播间 id
-    status: 0,  // 直播状态，这里是默认状态，实际上以获取到的状态为准
-    cover: '',  // 封面图，会自动获取
+    name: '千零莉露卡', // 主播名字或昵称
+    status: 0,  // 直播状态，不需要改
+    cover: '',  // 封面图，不需要改
     send_cover: true, // 是否发送直播间封面图片
+    title: '', // 直播间标题，不需要改
     interval: 60000,  // 多久查询一次直播状态，默认 1 分钟查询一次
-    qq_group: 1111111, // 发送消息到哪个 QQ 群里。设置为 0 则不发送
-    qq_person: 22222222, // 发送消息到哪个 QQ 号上（即私聊）。设置为 0 则不发送。如果需要发送，建议先加好友，不知道对陌生人能不能发送
+    qq_group: 859672706, // 发送消息到哪个 QQ 群里。设置为 0 则不发送
+    qq_person: 1247756698, // 发送消息到哪个 QQ 号上（即私聊）。设置为 0 则不发送。如果需要发送，建议先加好友，不知道对陌生人能不能发送
     msg: [             // 当直播状态变化时要发送的提醒消息
-      '千零莉露卡 尚未开播', // 0 尚未开播
-      '千零莉露卡 正在直播：https://live.bilibili.com/23251345', // 1 正在直播
-      '千零莉露卡 正在轮播'  // 2 轮播
+      '{name}尚未开播', // 0 尚未开播的提醒消息
+      '{name}正在直播：{title} https://live.bilibili.com/{room_id}', // 1 正在直播的提醒消息
+      '{name}正在轮播'  // 2 轮播的提醒消息
     ],
   },
   {
     room_id: 510,
+    name: '小孩梓',
     status: 0,
-    cover: '',  // 封面图，会自动获取
+    cover: '',
     send_cover: true,
+    title: '',
     interval: 60000,
-    qq_group: 1111111,
-    qq_person: 22222222,
+    qq_group: 859672706,
+    qq_person: 1247756698,
     msg: [
-      '梓毛 尚未开播',
-      '梓毛 正在直播：https://live.bilibili.com/510',
-      '梓毛 正在轮播'
+      '{name}尚未开播',
+      '{name}正在直播：{title} https://live.bilibili.com/{room_id}',
+      '{name}正在轮播'
     ],
   },
 ]
@@ -81,6 +89,7 @@ function cb (room_id, json) {
   const status = json.data.room_info.live_status
   // console.log(status)
   room.cover = json.data.room_info.cover
+  room.title = json.data.room_info.title
 
   // 当直播状态变化时发送提示
   if (status !== room.status) {
@@ -103,18 +112,28 @@ function cb (room_id, json) {
 
 // 发送提醒消息
 function sendMsg (room_id) {
+  // 获取提醒消息
   const room = getRoomCfg(room_id)
   if (!room) {
     return
   }
-  const msg = room.msg[room.status]
+  let msg = room.msg[room.status]
   if (!msg) {
     return console.log(`没有找到提醒消息。${room_id} ${room.status}`)
   }
+  
+  // 替换转义代码
+  msg = msg.replace('{name}', room.name)
+  msg = msg.replace('{title}', room.title)
+  msg = msg.replace('{room_id}', room.room_id)
+
   console.log(msg)
 
+  // 生成封面图代码
   const imageCode = (room.send_cover && room.cover) ? `[CQ:image,file=${room.cover}]` : ''
+  // CQ 码里时用 file 可以发送图片，但是 url 不行
 
+  // 发送消息
   if (room.qq_group !== 0) {
     const url = `http://127.0.0.1:5700/send_group_msg?group_id=${room.qq_group}&message=${imageCode}${msg}&auto_escape=false`
     http.get(encodeURI(url))
