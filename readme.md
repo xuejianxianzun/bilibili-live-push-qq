@@ -85,5 +85,5 @@ forever start live-push-qq.js
 
 - 减少发送群消息的数量、频次、字数
 - 不发送封面图片，只发纯文字消息
+- 删除文件 `session.token`，然后重新启动 go-cqhttp 进行登录
 - go-cqhttp 上登录的 QQ 号多挂几天，也许就好了
-- 修改 QQ 密码，然后在 go-cqhttp 里重新登陆，也许可以解除限制
