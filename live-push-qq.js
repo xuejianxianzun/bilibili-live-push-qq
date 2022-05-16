@@ -65,7 +65,8 @@ function getLiveRoomData (room_id) {
       }
     })
   }).on('error', (e) => {
-    console.error(e);
+    console.log(room_id)
+    console.error(e)
   })
 }
 
