@@ -64,10 +64,8 @@ function getLiveRoomData (room_id) {
         console.error(error.message)
       }
     })
-
-    res.on('error', err => {
-      console.log(err.message)
-    })
+  }).on('error', (e) => {
+    console.error(e);
   })
 }
 
