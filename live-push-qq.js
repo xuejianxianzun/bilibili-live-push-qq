@@ -16,7 +16,20 @@ const room_list = [
     send_cover: true, // 是否发送直播间封面图片
     title: '', // 直播间标题，不需要改
     interval: 60000,  // 多久查询一次直播状态，默认 1 分钟查询一次
-    qq_group: 11111111, // 发送消息到哪个 QQ 群里。设置为 0 则不发送
+    qq_group: 0, // 发送消息到哪个 QQ 群里。设置为 0 则不发送
+    // 如果需要更复杂的 qq 群消息设置，例如发送到多个群，或者（并且）需要 @全体成员，则可以把上面的 qq_group 设置为 0
+    // 然后在下面的 qq_group_list 里设置群号和是否 @全体成员
+    // qq_group_list 不使用时可以为空数组，也可以删除该属性
+    qq_group_list: [
+      {
+        id: 1111111,
+        at_all: true,
+      },
+      {
+        id: 222222,
+        at_all: false,
+      },
+    ],
     qq_person: 111111111, // 发送消息到哪个 QQ 号上（即私聊）。设置为 0 则不发送。如果需要发送，建议先加好友，不知道对陌生人能不能发送
     msg: [             // 当直播状态变化时要发送的提醒消息
       '{name}尚未开播', // 0 尚未开播的提醒消息
@@ -32,8 +45,9 @@ const room_list = [
     send_cover: true,
     title: '',
     interval: 60000,
-    qq_group: 11111111,
-    qq_person: 111111111,
+    qq_group: 333333333,
+    qq_group_list: [],
+    qq_person: 0,
     msg: [
       '{name}尚未开播',
       '{name}正在直播：{title} https://live.bilibili.com/{room_id}',
@@ -120,11 +134,11 @@ function sendMsg (room_id) {
   if (!msg) {
     return console.log(`没有找到提醒消息。${room_id} ${room.status}`)
   }
-  
+
   // 替换转义代码
   msg = msg.replace('{name}', room.name)
-  .replace('{title}', room.title)
-  .replace('{room_id}', room.room_id)
+    .replace('{title}', room.title)
+    .replace('{room_id}', room.room_id)
 
   console.log(msg)
 
@@ -132,12 +146,29 @@ function sendMsg (room_id) {
   const imageCode = (room.send_cover && room.cover) ? `[CQ:image,file=${room.cover}]` : ''
   // CQ 码里时用 file 可以发送图片，但是 url 不行
 
-  // 发送消息
+  // 发送消息到指定群
   if (room.qq_group !== 0) {
     const url = `http://127.0.0.1:5700/send_group_msg?group_id=${room.qq_group}&message=${imageCode}${msg}&auto_escape=false`
     http.get(encodeURI(url))
   }
 
+  // 发送消息到多个群或者 @全体成员
+  if (room.qq_group_list && room.qq_group_list.length > 0) {
+    let time = 0
+    for (const group of room.qq_group_list) {
+      if (group.id) {
+        setTimeout(() => {
+          const atCode = group.at_all ? '[CQ:at,qq=all,name=不在群的QQ]' : ''
+          const url = `http://127.0.0.1:5700/send_group_msg?group_id=${group.id}&message=${imageCode}${atCode}${msg}&auto_escape=false`
+          http.get(encodeURI(url))
+        }, time)
+        time += 1000
+      }
+    }
+  }
+
+
+  // 发送消息到个人
   if (room.qq_person !== 0) {
     const url = `http://127.0.0.1:5700/send_private_msg?user_id=${room.qq_person}&message=${imageCode}${msg}&auto_escape=false`
     http.get(encodeURI(url))
