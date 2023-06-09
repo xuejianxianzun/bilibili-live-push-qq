@@ -1,3 +1,13 @@
+# 提醒
+
+由于 QQ 机器人经常挂掉，有时候重登都登不上，你可以查看另一个不使用 QQ 机器人的脚本：
+
+https://github.com/xuejianxianzun/bilibili-live-notify
+
+上面的脚本不需要折腾 QQ 机器人，配置也更简单。
+
+---------------
+
 # Bilibili 直播推送到 QQ 消息
 
 这是一个 Nodejs 脚本，通过 Bilibili 的 API 获取直播间状态，并且当状态变化时在 QQ 上进行通知（通过 QQ 机器人）。
