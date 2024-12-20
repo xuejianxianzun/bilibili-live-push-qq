@@ -62,26 +62,32 @@ function getLiveRoomData (room_id) {
   // const url = `https://api.live.bilibili.com/room/v1/Room/room_init?id=${room_id}`
 
   // 这个 api 获取的数据多，因为现在要获取封面图，所以换成了这个 api
-  const url = `https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?room_id=${room_id}`
-  https.get(url, res => {
-    let body = ''
+    const url = `https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?room_id=${room_id}`;
+    const options = {
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36' // 设置一个UA，否则会被服务器拦截返回code-352
+        }
+    };
+    https.get(url, options, res => {
+        let body = '';
 
-    res.on('data', (chunk) => {
-      body += chunk
-    })
+        res.on('data', (chunk) => {
+            body += chunk;
+        });
 
-    res.on('end', () => {
-      try {
-        const json = JSON.parse(body)
-        cb(room_id, json)
-      } catch (error) {
-        console.error(error.message)
-      }
-    })
-  }).on('error', (e) => {
-    console.log(room_id)
-    console.error(e)
-  })
+        res.on('end', () => {
+            try {
+                const json = JSON.parse(body);
+                cb(room_id, json);
+            } catch (error) {
+                console.error('解析直播间数据出错，完整API返回结果:', body); // 输出完整结果便于排查
+                console.error('错误信息:', error.message);
+            }
+        });
+    }).on('error', (e) => {
+        console.log('请求直播间数据出错，room_id:', room_id);
+        console.error('错误信息:', e.message);
+    });
 }
 
 function getRoomCfg (room_id) {
